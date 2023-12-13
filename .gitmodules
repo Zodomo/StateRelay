@@ -4,6 +4,3 @@
 [submodule "lib/LayerZero"]
 	path = lib/LayerZero
 	url = https://github.com/LayerZero-Labs/LayerZero
-[submodule "lib/solady"]
-	path = lib/solady
-	url = https://github.com/vectorized/solady

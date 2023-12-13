@@ -12,6 +12,8 @@ import "../lib/LayerZero/contracts/interfaces/ILayerZeroEndpoint.sol";
  * @custom:github https://github.com/Zodomo/StateRelay
  */
 abstract contract StateRelay is ILayerZeroReceiver {
+    /// @dev Thrown when anyone but the LZ endpoint tries to call lzReceive()
+    error InvalidCaller();
     /// @dev Thrown when anyone but the relayer tries to message from the relay chain
     error InvalidSender();
     /// @dev Thrown when messages from any chain other than the target relay chain are received
@@ -42,7 +44,7 @@ abstract contract StateRelay is ILayerZeroReceiver {
     }
 
     /// @dev Implement this function to prepare the payload for StateRelayer. If you don't know how to generate
-    /// function calldata correctly, see CalldataHelper.sol
+    /// function calldata correctly, see CalldataHelper.sol. If `data` is left empty, addr's balance will be returned.
     /// @param addr Target address for StateRelayer to query
     /// @param data Calldata to be naively passed to addr
     function _preparePayload(address addr, bytes memory data) internal pure returns (bytes memory payload) {
@@ -50,14 +52,14 @@ abstract contract StateRelay is ILayerZeroReceiver {
     }
 
     /// @dev Implement this function to send a message to the target StateRelayer with default LZ settings
-    function _lzSend(bytes calldata payload) internal {
+    function _lzSend(bytes memory payload) internal {
         ILayerZeroEndpoint(lzEndpoint).send{value: msg.value}(
             lzChainId, lzPath, payload, payable(msg.sender), address(0), bytes("")
         );
     }
 
     /// @dev Implement this function to send a message to the target StateRelayer with custom LZ settings
-    function _lzSend(address zroPaymentAddress, bytes calldata adapterParams, bytes calldata payload) internal {
+    function _lzSend(bytes memory payload, address zroPaymentAddress, bytes calldata adapterParams) internal {
         ILayerZeroEndpoint(lzEndpoint).send{value: msg.value}(
             lzChainId, lzPath, payload, payable(msg.sender), zroPaymentAddress, adapterParams
         );
@@ -69,8 +71,10 @@ abstract contract StateRelay is ILayerZeroReceiver {
 
     /// @dev This is called by LZ Endpoint to deliver StateRelayer's return data
     function lzReceive(uint16 srcChainId, bytes calldata srcAddress, uint64, bytes calldata payload) external {
+        if (msg.sender != lzEndpoint) revert InvalidCaller();
         if (srcChainId != lzChainId) revert InvalidSrcChain();
         if (keccak256(srcAddress) != keccak256(lzPath)) revert InvalidSender();
+
         _processPayload(payload);
     }
 }
