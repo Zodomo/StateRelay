@@ -2,8 +2,8 @@
 pragma solidity ^0.8.23;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {StateRelay} from "../src/StateRelay.sol";
+import {StateRelayer} from "../src/StateRelayer.sol";
 
 contract StateRelayTest is Test {
-    StateRelay public stateRelay;
+    StateRelayer public stateRelayer;
 }
