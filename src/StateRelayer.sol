@@ -70,19 +70,23 @@ contract StateRelayer is ILayerZeroReceiver {
     }
 
     /// @dev The call from LZ's Endpoint is what triggers the action on target. If no calldata is provided, then only
-    /// the target's ETH balance is returned. Otherwise, the calldata is sent and the result is returned if successful.
+    /// the target's ETH balance is returned. Otherwise, the calldata is sent and the result (if any) is returned.
     function lzReceive(uint16 srcChainId, bytes calldata srcAddress, uint64, bytes calldata payload) external {
         if (msg.sender != lzEndpoint) revert InvalidCaller();
 
         (address target, bytes memory data) = _decodePayload(payload);
 
-        // Return balance if no calldata is provided, otherwise execute call and return result if successful
+        // Return balance if no calldata is provided, otherwise execute call and return result (empty upon failure)
         if (data.length == 0) {
             _lzSend(srcChainId, srcAddress, abi.encodePacked(target.balance));
         } else {
             (bool success, bytes memory result) = target.call(data);
-            if (!success) emit CallFailed(target, data, result);
-            else _lzSend(srcChainId, srcAddress, result);
+            if (!success) {
+                emit CallFailed(target, data, result);
+                _lzSend(srcChainId, srcAddress, bytes(""));
+            } else {
+                _lzSend(srcChainId, srcAddress, result);
+            }
         }
     }
 }
