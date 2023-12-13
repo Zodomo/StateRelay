@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.23;
 
-import "./CalldataHelper.sol";
 import "../lib/LayerZero/contracts/interfaces/ILayerZeroReceiver.sol";
 import "../lib/LayerZero/contracts/interfaces/ILayerZeroEndpoint.sol";
 
-abstract contract StateRelay is CalldataHelper, ILayerZeroReceiver {
+/**
+ * @title StateRelay
+ * @notice This contract allows any inheriting contract to perform state reads on other chains via bridges.
+ * @dev The inheriting contract must use _preparePayload() to call _lzSend() and also must implement _processPayload()
+ * @author Zodomo.eth (Farcaster/Telegram/Discord/Github: @zodomo, X: @0xZodomo, Email: zodomo@proton.me)
+ * @custom:github https://github.com/Zodomo/StateRelay
+ */
+abstract contract StateRelay is ILayerZeroReceiver {
     /// @dev Thrown when anyone but the relayer tries to message from the relay chain
     error InvalidSender();
     /// @dev Thrown when messages from any chain other than the target relay chain are received
@@ -35,7 +41,8 @@ abstract contract StateRelay is CalldataHelper, ILayerZeroReceiver {
         lzPath = abi.encodePacked(stateRelayer_, address(this));
     }
 
-    /// @dev Implement this function to prepare the payload for StateRelayer
+    /// @dev Implement this function to prepare the payload for StateRelayer. If you don't know how to generate
+    /// function calldata correctly, see CalldataHelper.sol
     /// @param addr Target address for StateRelayer to query
     /// @param data Calldata to be naively passed to addr
     function _preparePayload(address addr, bytes memory data) internal pure returns (bytes memory payload) {

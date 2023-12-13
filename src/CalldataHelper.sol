@@ -1,7 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.23;
 
-contract CalldataHelper {
+/**
+ * @title CalldataHelper
+ * @notice This contract has helper functions to assist users with preparing function calldata. Implement these if you
+ * don't know how to generate calldata manually or want to provide external interfaces to help your users with making
+ * arbitrary calls.
+ * @dev Only provide the string portion of the function signature for funcSig in any function!
+ * @author Zodomo.eth (Farcaster/Telegram/Discord/Github: @zodomo, X: @0xZodomo, Email: zodomo@proton.me)
+ * @custom:github https://github.com/Zodomo/StateRelay
+ */
+library CalldataHelper {
     function getCalldata(string memory funcSig) external pure returns (bytes memory) {
         return abi.encodeWithSignature(funcSig);
     }
